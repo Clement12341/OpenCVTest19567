@@ -4,6 +4,7 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
+import org.opencv.core.Core;
 import org.opencv.core.Mat;
 import org.opencv.core.Rect;
 import org.opencv.core.Scalar;
@@ -49,8 +50,10 @@ public class OpenCVTest extends OpMode {
     class examplePipeline extends OpenCvPipeline{
         Mat YCBCR = new Mat();
         Mat leftCrop;
+        Mat middleCrop;
         Mat rightCrop;
         double leftavgfin;
+        double middleavgfin;
         double rightavgfin;
         Mat outPut = new Mat();
         Scalar rectColor = new Scalar(255.0, 0.0, 0.0);
@@ -60,12 +63,38 @@ public class OpenCVTest extends OpMode {
             Imgproc.cvtColor(input, YCBCR, Imgproc.COLOR_RGB2YCrCb);
             telemetry.addLine("pipeline running");
 
-            Rect leftRect = new Rect(1, 1, 319, 359);
-            Rect rigthRect = new Rect(320, 1, 319, 359);
+            Rect leftRect = new Rect(1, 1, 213, 359);
+            Rect middleRect = new Rect(214, 1, 214, 359);
+            Rect rightRect = new Rect(429, 1, 213, 359);
 
             input.copyTo(outPut);
             Imgproc.rectangle(outPut, leftRect, rectColor, 2);
-            Imgproc.rectangle(outPut, rigthRect, rectColor, 2);
+            Imgproc.rectangle(outPut, middleRect, rectColor, 2);
+            Imgproc.rectangle(outPut, rightRect, rectColor, 2);
+
+            leftCrop = YCBCR.submat(leftRect);
+            middleCrop = YCBCR.submat(middleRect);
+            rightCrop = YCBCR.submat(rightRect);
+
+            Core.extractChannel(leftCrop, leftCrop, 2);
+            Core.extractChannel(middleCrop, middleCrop, 2);
+            Core.extractChannel(rightCrop, rightCrop, 2);
+
+            Scalar leftavg = Core.mean(leftCrop);
+            Scalar middleavg = Core.mean(middleCrop);
+            Scalar rightavg = Core.mean(rightCrop);
+
+            leftavgfin = leftavg.val[0];
+            middleavgfin = middleavg.val[0];
+            rightavgfin = rightavg.val[0];
+
+            if (leftavgfin > middleavgfin && leftavgfin > rightavgfin) {
+                telemetry.addLine("left");
+            } else if (middleavgfin > leftavgfin && middleavgfin > rightavgfin) {
+                telemetry.addLine("middle");
+            } else {
+                telemetry.addLine("right");
+            }
 
 
 
